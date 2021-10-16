@@ -1,4 +1,5 @@
 import functions as f
 
-x = f.CompressionFrontPage()
+x = f.CompressionAnalysis()
 x.start()
+

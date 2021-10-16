@@ -8,25 +8,40 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 matplotlib.use('TkAgg')
 from scipy import stats
 
-class CompressionFrontPage():
+class CompressionAnalysis():
 
     def __init__(self) -> None:
+        #Creating the tkinter window and frames
         self.root = tk.Tk()
         self.fig = plt.figure(figsize=(7,7), dpi=100)
         self.ax = self.fig.add_subplot(211)
         self.ax2 = self.fig.add_subplot(212)
         self.fig.tight_layout(pad=3.0)
+        self.scaleLabelFrame = Frame(self.root)
+        self.scalesFrame = Frame(self.root)
         self.radioFrame = Frame(self.root)
         self.dimensionFrame = Frame(self.root)
         self.dimensionEntryFrame = Frame(self.root)
         self.copyLabelFrame = Frame(self.root)
         self.buttonsFrame = tk.Frame(self.root)
+        self.quitButtonFrame = tk.Frame(self.root)
 
+        #Choose data
+        self.dataFile = filedialog.askopenfilenames()
+        #Force window focus back to main page
+        self.root.focus_force()
+        
         #tkinter styles
         s = ttk.Style()
         s.configure("Scale1.Horizontal.TScale", background="black")
         s.configure("Scale2.Horizontal.TScale", background="red")
-        s.configure("TButton",font=('Helvetica', 14))
+        s.configure("TButton",font=('Helvetica', 12))
+        s.configure("TRadiobutton",font=('Helvetica', 12))
+        s.configure("TLabel",font=('Helvetica', 12))
+        s.configure("TEntry",font=('Helvetica', 12))
+
+        #Holder for keeping track of which dataset to use
+        self.dataCounter = 0
 
         #Holder for choosing model type, will be more relevant as I add more.
         self.modelChosen = tk.StringVar()
@@ -37,24 +52,31 @@ class CompressionFrontPage():
         self.heightVar.set("2")
         self.diameterVar = tk.StringVar()
         self.diameterVar.set("2")
+        self.widthVar=tk.StringVar()
+        self.lengthVar=tk.StringVar()
+        self.widthVar.set("2")
+        self.lengthVar.set("2")
+
         #Holder for Young's Modulus output data
         self.slopeVar = tk.DoubleVar()
         self.interceptVar = tk.DoubleVar()
         self.rSquaredVar = tk.DoubleVar()
 
+        #Used to limit inputs to positive integers. %P used to check on key press in Entry widget.
+        self.vcmd = (self.root.register(self.validateCommand), "%P")
+
     def processData(self):
-        #Choose data
-        dataFile = filedialog.askopenfilename()
-        self.dataFileString = dataFile.split("/")
-        #Force window focus back to main page
-        self.root.focus_force()
-        self.data = pd.read_csv(dataFile, usecols=(["distance","load"]),encoding='utf-16',sep= '\t')
+        #Process data for the current data set
+        self.dataFileString = self.dataFile[self.dataCounter].split("/")
+        self.data = pd.read_csv(self.dataFile[self.dataCounter], usecols=(["distance","load"]),encoding="utf_16_le",sep="\t")
         self.data["load"] = -self.data["load"]
         self.data["distance"] = -self.data["distance"]
         self.yMax = self.data["load"].max()
         self.xMax = self.data["distance"].max()
+        self.data.plot(x = "distance", y = "load", kind="scatter", legend=True, ax=self.ax)
 
     def toolbar(self):
+        #create the interactive toolbar for plt
         frameToolbar = Frame(self.root)
         chartFrame = Frame(self.root)
         self.canvas = FigureCanvasTkAgg(self.fig, chartFrame)
@@ -68,8 +90,10 @@ class CompressionFrontPage():
         self.ax.set_xlabel("Distance / mm")
         self.ax.set_ylabel("Load / N")
         self.ax.set_title(self.dataFileString[-1])
+        #For some reason xlims do not get updated automatically when going to next dataset
+        self.ax.set_xlim([0,self.xMax])
 
-        self.ax2.set_xlabel("Strain")
+        self.ax2.set_xlabel("Strain / N m")
         self.ax2.set_ylabel("Stress")
         self.ax2.set_title('Stress-Strain Curve')
 
@@ -89,12 +113,10 @@ class CompressionFrontPage():
         self.fig.canvas.draw_idle()
 
     def sliders(self):
-        scaleLabelFrame = Frame(self.root)
-        scalesFrame = Frame(self.root)
-        sliderLabel = ttk.Label(scaleLabelFrame,text="Adjust the sliders to enclose the linear region", font=(None,14), justify=tk.CENTER)
-        self.xSlider1 = ttk.Scale(scalesFrame,from_=0,to=self.xMax,variable = self.xSliderValue1, orient="horizontal", command = self.update, style="Scale1.Horizontal.TScale" ) 
+        sliderLabel = ttk.Label(self.scaleLabelFrame,text="Adjust the sliders to enclose the linear region", justify=tk.CENTER)
+        self.xSlider1 = ttk.Scale(self.scalesFrame,from_=0,to=self.xMax,variable = self.xSliderValue1, orient="horizontal", command = self.update, style="Scale1.Horizontal.TScale" ) 
         #xLabel2 = ttk.Label(frame1,textvariable=xSliderValue2, font=(None,18))
-        self.xSlider2 = ttk.Scale(scalesFrame,from_=0,to=self.xMax,variable = self.xSliderValue2, orient="horizontal", command = self.update,style="Scale2.Horizontal.TScale" ) 
+        self.xSlider2 = ttk.Scale(self.scalesFrame,from_=0,to=self.xMax,variable = self.xSliderValue2, orient="horizontal", command = self.update,style="Scale2.Horizontal.TScale" ) 
         sliderLabel.pack()
         self.xSlider1.pack(side = tk.LEFT,padx = 10)
         #xLabel2.pack(side = tk.RIGHT, padx=40)
@@ -103,24 +125,68 @@ class CompressionFrontPage():
         self.ax.vlines(self.xvLine1,0,self.yMax,colors='k')
         self.ax.vlines(self.xvLine2,0,self.yMax,colors='r')
 
-        scaleLabelFrame.pack()
-        scalesFrame.pack()
+        self.scaleLabelFrame.pack()
+        self.scalesFrame.pack(pady=(0,10))
 
+    def chooseModel(self):
+        #Radio buttons to choose which model you would like to use
+        self.radioLabel = ttk.Label(self.radioFrame, text = "Select the shape of object compressed").grid(row = 0, column=0,columnspan = 2)
+        self.cylinderRadio = ttk.Radiobutton(self.radioFrame, text = "Cylinder",value = "cylinder",variable=self.modelChosen,command = self.clearEntryFrames).grid(row = 1, column=0)
+        self.cuboidRadio = ttk.Radiobutton(self.radioFrame, text = "Cuboid", value = "cuboid",variable=self.modelChosen,command = self.clearEntryFrames).grid(row = 1, column=1)
+        self.radioFrame.pack(pady=(0,10))
+
+    def clearEntryFrames(self):
+        self.unpackWidgetsAfterGraphs()
+        self.widgetsAfterGraphs()
+
+    
+    #Check in input character is a digit in entry widgets. Reject addition of input if it is not.
+    def validateCommand(self,P):
+        if str.isdigit(P) or str(P) == "":
+            return True
+        else: 
+            return False
+    
     def cylinderEntries(self):
+        #Input for cylinder model
+        
         #Height label
-        ttk.Label(self.dimensionFrame,text="Input height / mm", font=(None,14)).grid(row=0,column=0,padx=20)
+        ttk.Label(self.dimensionFrame,text="Input height / mm").grid(row=0,column=0,padx=20)
         #Height textbox
-        tk.Entry(self.dimensionEntryFrame, textvariable = self.heightVar,validate="focusout", font=('Helvetica', 14),width = 8).grid(row=0,column=0,padx=60)
+        tk.Entry(self.dimensionEntryFrame, textvariable = self.heightVar,validatecommand=(self.vcmd),validate="all",width = 8).grid(row=0,column=0,padx=60)
         
         #Diameter label
-        ttk.Label(self.dimensionFrame,text="Input diameter / mm", font=(None,14)).grid(row=0,column=1,padx=20)
+        ttk.Label(self.dimensionFrame,text="Input diameter / mm").grid(row=0,column=1,padx=20)
         #Diameter Textbox
-        tk.Entry(self.dimensionEntryFrame,textvariable = self.diameterVar,validate="focusout", font=('Helvetica', 14),width = 8).grid(row=0,column=1,padx=60)
+        tk.Entry(self.dimensionEntryFrame,textvariable = self.diameterVar,validatecommand=(self.vcmd),validate='all',width = 8).grid(row=0,column=1,padx=60)
 
         self.dimensionFrame.pack()
-        self.dimensionEntryFrame.pack()
+        self.dimensionEntryFrame.pack(pady=(0,5))
+
+    def cuboidEntries(self):
+        #Input for cuboid model
+        
+        #Height label        
+        ttk.Label(self.dimensionFrame,text="Input height / mm").grid(row=0,column=0,padx=20)
+        #Height textbox
+        tk.Entry(self.dimensionEntryFrame, textvariable = self.heightVar,validatecommand=(self.vcmd),validate="all",width = 8).grid(row=0,column=0,padx=60)
+
+        #Width Label
+        ttk.Label(self.dimensionFrame,text="Input width / mm").grid(row=0,column=1,padx=20)
+        #Width Textbox
+        tk.Entry(self.dimensionEntryFrame,textvariable = self.widthVar,validatecommand=(self.vcmd),validate="all",width = 8).grid(row=0,column=1,padx=60)
+
+        #Length Label
+        ttk.Label(self.dimensionFrame,text="Input Length / mm").grid(row=0,column=2,padx=20)
+        #Length Textbox
+        tk.Entry(self.dimensionEntryFrame,textvariable = self.lengthVar,validatecommand=(self.vcmd),validate="all",width = 8).grid(row=0,column=2,padx=60)
+
+        self.dimensionFrame.pack()
+        self.dimensionEntryFrame.pack(pady=(0,5))
 
     def findIndex(self,value, df, colname):
+        #Finding the index of the data that corresponds best to slider input value
+        
         #limiting scope of dataframe that is being iterated through
         df = df[colname]
         maxIndex = len(df)-1
@@ -147,7 +213,6 @@ class CompressionFrontPage():
 
     def linearRegression(self):
     #convert length and width to m, then get area
-        #Preparing for introduction of cuboid model
         if self.modelChosen.get() == "cuboid":
             area = (float(self.lengthVar.get())/1000)*(float(self.widthVar.get())/1000)
             print(area)
@@ -202,35 +267,82 @@ class CompressionFrontPage():
 
         self.fig.canvas.draw_idle()
 
+    def unpackWidgetsAfterGraphs(self):
+        #Unpacking widgets so that they can be updated
+        self.dimensionFrame.pack_forget()
+        self.dimensionEntryFrame.pack_forget()  
+        self.copyLabelFrame.pack_forget()
+        self.buttonsFrame.pack_forget()
+        self.quitButtonFrame.pack_forget()
+        self.radioFrame.pack_forget()
+        
+    def widgetsAfterGraphs(self):
+        #Repacking widgets to update
+        self.radioFrame = Frame(self.root)
+        self.dimensionFrame = Frame(self.root)
+        self.dimensionEntryFrame = Frame(self.root)
+        self.copyLabelFrame = Frame(self.root)
+        self.buttonsFrame = tk.Frame(self.root)
+        self.quitButtonFrame = tk.Frame(self.root)
+
+        self.chooseModel()
+        if self.modelChosen.get() == "cuboid":
+            self.cuboidEntries()
+        elif self.modelChosen.get() == "cylinder":
+            self.cylinderEntries()
+        self.copyButton()
+        self.nextButton()
+        self.quitButton()
+        
     def copyResults(self):
-        #root.withdraw() #Can be used to close window after copying
         self.linearRegression()
         self.root.clipboard_clear()
-        self.root.clipboard_append(str(self.slopeVar.get())+"\t"+str(self.interceptVar.get())+"\t"+str(self.rSquaredVar.get()))
+        self.root.clipboard_append(str(self.dataFileString[-1])+"\t"+str(self.slopeVar.get())+"\t"+str(self.interceptVar.get())+"\t"+str(self.rSquaredVar.get()))
         self.root.update() # now it stays on the clipboard after the window is closed
 
     def copyButton(self):
-        copyLabel = ttk.Label(self.copyLabelFrame,text = "Press the copy button to get results on clipboard:\nYoung's Modulus/ Pa, Regression intercept and R\u00b2",font=(None,14),justify=tk.CENTER, style="CopyLabel.TLabel")
+        copyLabel = ttk.Label(self.copyLabelFrame,text = "Press the copy button to get results on clipboard:\nFile name, Young's Modulus/ Pa, Regression intercept and R\u00b2",justify=tk.CENTER, style="CopyLabel.TLabel")
         copyLabel.pack(pady=10)
         copyButton = ttk.Button(self.buttonsFrame,text="Copy results to clipboard",command = self.copyResults)
         copyButton.pack(side = tk.LEFT)
         self.copyLabelFrame.pack()
         self.buttonsFrame.pack()
     
+    def nextButtonCommand(self):
+        #Updating dataset used, and updating all widgets to match the new dataset
+        self.dataCounter += 1
+        self.processData()
+        self.graphDecorators()
+        self.update(None)
+        self.unpackWidgetsAfterGraphs()
+        self.scalesFrame.pack_forget()
+        self.scaleLabelFrame.pack_forget()
+        self.scalesFrame = tk.Frame(self.root)
+        self.scaleLabelFrame = tk.Frame(self.root)
+        self.sliders()
+        self.widgetsAfterGraphs()
+        self.ax2.cla()
+        self.fig.canvas.draw_idle()
+    
     def nextButton(self):
-        nextButton = ttk.Button(self.buttonsFrame,text="Next data set",command=self.nextButtonCommand)
-        nextButton.pack(side = tk.LEFT)
-        self.buttonsFrame.pack()
-        
+        #First check if there is another dataset left to be processed from selection. If not, disable the button. 
+        if self.dataCounter < len(self.dataFile)-1:
+            nextButton = ttk.Button(self.buttonsFrame,text="Next data set",command=self.nextButtonCommand)
+            nextButton.pack(side = tk.LEFT)
+            self.buttonsFrame.pack()
+        else:
+            nextButton = ttk.Button(self.buttonsFrame,text="Next data set",command=self.nextButtonCommand,state="disabled")
+            nextButton.pack(side = tk.LEFT)
+            self.buttonsFrame.pack()
+   
     def quitButtonCommand(self):
         self.root.quit()
         self.root.destroy()
 
     def quitButton(self):
-        quitButtonFrame = tk.Frame(self.root)
-        quitButton = ttk.Button(quitButtonFrame, text="Exit",command = self.quitButtonCommand)
+        quitButton = ttk.Button(self.quitButtonFrame, text="Exit",command = self.quitButtonCommand)
         quitButton.pack()
-        quitButtonFrame.pack()
+        self.quitButtonFrame.pack()
 
     def start(self):
         self.processData()
@@ -239,11 +351,9 @@ class CompressionFrontPage():
         self.xvLine1 = 0
         self.xvLine2 = self.xMax
         self.toolbar()
-        self.data.plot(x = "distance", y = "load", kind="scatter", legend=True, ax=self.ax)
+        self.processData()
         self.graphDecorators()
         self.sliders()
-        self.cylinderEntries()
-        self.copyButton()
-        self.quitButton()
+        self.widgetsAfterGraphs()
 
         self.root.mainloop()
