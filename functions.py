@@ -30,6 +30,8 @@ class CompressionAnalysis():
         self.dataFile = filedialog.askopenfilenames()
         #Force window focus back to main page
         self.root.focus_force()
+        #Holder for keeping track of which dataset to use
+        self.dataCounter = 0
         
         #tkinter styles
         s = ttk.Style()
@@ -39,9 +41,6 @@ class CompressionAnalysis():
         s.configure("TRadiobutton",font=('Helvetica', 12))
         s.configure("TLabel",font=('Helvetica', 12))
         s.configure("TEntry",font=('Helvetica', 12))
-
-        #Holder for keeping track of which dataset to use
-        self.dataCounter = 0
 
         #Holder for choosing model type, will be more relevant as I add more.
         self.modelChosen = tk.StringVar()
@@ -215,7 +214,6 @@ class CompressionAnalysis():
     #convert length and width to m, then get area
         if self.modelChosen.get() == "cuboid":
             area = (float(self.lengthVar.get())/1000)*(float(self.widthVar.get())/1000)
-            print(area)
         elif self.modelChosen.get() == "cylinder":
             radius = float(self.diameterVar.get())/2000 # 
             area = np.pi * (radius**2)
@@ -301,10 +299,8 @@ class CompressionAnalysis():
         self.root.update() # now it stays on the clipboard after the window is closed
 
     def copyButton(self):
-        copyLabel = ttk.Label(self.copyLabelFrame,text = "Press the copy button to get results on clipboard:\nFile name, Young's Modulus/ Pa, Regression intercept and R\u00b2",justify=tk.CENTER, style="CopyLabel.TLabel")
-        copyLabel.pack(pady=10)
-        copyButton = ttk.Button(self.buttonsFrame,text="Copy results to clipboard",command = self.copyResults)
-        copyButton.pack(side = tk.LEFT)
+        ttk.Label(self.copyLabelFrame,text = "Press the copy button to get results on clipboard:\nFile name, Young's Modulus/ Pa, Regression intercept and R\u00b2",justify=tk.CENTER, style="CopyLabel.TLabel").pack(pady=10)
+        ttk.Button(self.buttonsFrame,text="Copy results to clipboard",command = self.copyResults).pack(side = tk.LEFT)
         self.copyLabelFrame.pack()
         self.buttonsFrame.pack()
     
@@ -327,12 +323,10 @@ class CompressionAnalysis():
     def nextButton(self):
         #First check if there is another dataset left to be processed from selection. If not, disable the button. 
         if self.dataCounter < len(self.dataFile)-1:
-            nextButton = ttk.Button(self.buttonsFrame,text="Next data set",command=self.nextButtonCommand)
-            nextButton.pack(side = tk.LEFT)
+            ttk.Button(self.buttonsFrame,text="Next data set",command=self.nextButtonCommand).pack(side = tk.LEFT)
             self.buttonsFrame.pack()
         else:
-            nextButton = ttk.Button(self.buttonsFrame,text="Next data set",command=self.nextButtonCommand,state="disabled")
-            nextButton.pack(side = tk.LEFT)
+            ttk.Button(self.buttonsFrame,text="Next data set",command=self.nextButtonCommand,state="disabled").pack(side = tk.LEFT)
             self.buttonsFrame.pack()
    
     def quitButtonCommand(self):
@@ -340,8 +334,7 @@ class CompressionAnalysis():
         self.root.destroy()
 
     def quitButton(self):
-        quitButton = ttk.Button(self.quitButtonFrame, text="Exit",command = self.quitButtonCommand)
-        quitButton.pack()
+        ttk.Button(self.quitButtonFrame, text="Exit",command = self.quitButtonCommand).pack()
         self.quitButtonFrame.pack()
 
     def start(self):
