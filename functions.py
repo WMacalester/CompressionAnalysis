@@ -299,7 +299,7 @@ class CompressionAnalysis():
         self.root.update() # now it stays on the clipboard after the window is closed
 
     def copyButton(self):
-        ttk.Label(self.copyLabelFrame,text = "Press the copy button to get results on clipboard:\nFile name, Young's Modulus/ Pa, Regression intercept and R\u00b2",justify=tk.CENTER, style="CopyLabel.TLabel").pack(pady=10)
+        ttk.Label(self.copyLabelFrame,text = "Press the copy button to get results on clipboard:\nFile name, Young's Modulus / Pa, Regression intercept and R\u00b2",justify=tk.CENTER, style="CopyLabel.TLabel").pack(pady=10)
         ttk.Button(self.buttonsFrame,text="Copy results to clipboard",command = self.copyResults).pack(side = tk.LEFT)
         self.copyLabelFrame.pack()
         self.buttonsFrame.pack()
