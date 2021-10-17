@@ -13,7 +13,7 @@ python -m tkinter
 
 import matplotlib
 
-print(matplotlib.__version__)
+print(matplotlib.\_\_version\_\_)
 
 
 ### Please use the following resources to install these libraries if they are not installed
@@ -41,7 +41,7 @@ When the data is suitable, paste the data in a separate spreadsheet for further 
 
 ![Example Window](/ExampleWindowLabelled.png)
 
-### The calculations
+### The Calculations
 
 The Young's modulus is a mechanical property of a material that characterises the deformation (strain) that arises upon the application of a force (stress) along the axis of compression within the linear elastic region. 
 
@@ -56,6 +56,6 @@ where:
 
 The Young's modulus can therefore be approximated by linear regression across the linear elastic region of the stress-strain curve. This app outputs the calculated Young's modulus for a given set of inputs, along with the calculated intercept and R<sup>2</sup> values from the regression.
   
-##### Sample shapes
+##### Sample Shapes
 
 2 separate models have so far been incorporated for if the samples were either cuboidal or cylindrical in shape. This will affect the area calculations, and hence there are separate inputs for either model type.
