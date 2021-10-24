@@ -1,33 +1,27 @@
 # CompressionAnalysis
 An app to aid in determining the Young's modulus of a material from compression testing data. This app takes load vs distance data acquired using a a STARRET FMS-500-L2 Force Measurement System. Please ensure that the data has been exported from the system as a .csv file before loading into the app.
 
+# First Time Installation.
 
-# Installation
-This app makes use of the tkinter and matplotlib libraries. These should be pre-installed if you are using the anaconda distribution of python
+First navigate to the app directory. Create a new virtual environment within the app directory. Activate the virtual environment for use whenever loading the app, then install all required packages listed in requirements. The following is an example for python >= 3.3.
 
-* To check if you have tkinter, please run the following in the command line:
-
-python -m tkinter
-
-* To check if you have matplotlib installed, please run the following in a new file:
-
-import matplotlib
-
-print(matplotlib.\_\_version\_\_)
-
-
-### Please use the following resources to install these libraries if they are not installed
-
-Tkinter - https://tkdocs.com/tutorial/install.html
-Matplotlib - https://matplotlib.org/stable/users/installing.html
-
-### Installing Compression Analysis App
-
-Download the Compression Analysis app folder as a zip file and extract the folder to a new directory.
+`cd .../CompressionAnalysis/` - change directory to the app folder   
+`python3 -m venv venv`  - create the virtual environment  
+`venv\Scripts\activate` - activate the virtual environment  
+`pip install -r requirements.txt` - install required packages   
 
 # Using the App
 
-Run main.py to start the app. A prompt will open asking you to select which files you would like to open (this can be a batch of selected files). A new window will open, with the first dataset presented in the top graph. 
+First change the directory to the app folder, then activate the virtual environment, then run main.py to start the app. When you are finished using the app, remember to deactivate the virtual environment.
+
+`cd .../CompressionAnalysis/` - change directory to the app folder.   
+`venv\Scripts\activate` - activate the virtual environment.  
+`python main.py` - runs the app.  
+`venv\Scripts\deactivate` - deactivate the virtual environment when finished.
+
+A prompt will open asking you to select which files you would like to open (this can be a batch of selected files). A new window will open, with the first dataset presented in the top graph. 
+
+![Example Window](/ExampleWindowLabelled.png)
 
 Using the sliders, enclose the region in the graph that corresponds to the linear elastic region. If necessary, you can use the zoom tool in the top toolbar to readjust the axes.
 
@@ -39,7 +33,7 @@ The graphs will update for visual confirmation that the calculation has been cor
 
 When the data is suitable, paste the data in a separate spreadsheet for further analysis. Optionally, the graphs may be saved via the top toolbar for future reference if desired. If you have further datasets to process, the "Next data set" button will load the nextdata set. If you are finished analysing your datasets, please exit the app using the "Exit" button at the bottom of the app. 
 
-![Example Window](/ExampleWindowLabelled.png)
+
 
 ### The Calculations
 
@@ -56,6 +50,6 @@ where:
 
 The Young's modulus can therefore be approximated by linear regression across the linear elastic region of the stress-strain curve. This app outputs the calculated Young's modulus for a given set of inputs, along with the calculated intercept and R<sup>2</sup> values from the regression.
   
-##### Sample Shapes
+### Sample Shapes
 
 2 separate models have so far been incorporated for if the samples were either cuboidal or cylindrical in shape. This will affect the area calculations, and hence there are separate inputs for either model type.
